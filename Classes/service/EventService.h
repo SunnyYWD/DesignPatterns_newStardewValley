@@ -19,6 +19,7 @@ public:
     void handleQuestDialogue(Lewis* lewis);
     void checkQuestProgress();
     void setUIService(UIService* ui) { uiService = ui; }
+    void setWeatherService(class WeatherService* ws) { weatherService = ws; }
     
 private:
     std::vector<BaseEvent*> events;
@@ -26,6 +27,7 @@ private:
     MapService* mapService = nullptr;
     PlayerService* playerService = nullptr;
     UIService* uiService = nullptr;
+    class WeatherService* weatherService = nullptr;
     
     void handleWoodQuest(Lewis* lewis, QuestState questState);
     void handleBridgeQuest(Lewis* lewis, QuestState questState);

@@ -6,6 +6,7 @@
 #include "service/MapService.h"
 #include "service/PlayerService.h"
 #include "service/UIService.h"
+#include "service/WeatherService.h"
 #include "GameMap.h"
 #include "Player.h"
 #include "Lewis.h"
@@ -14,7 +15,6 @@
 #include "DialogueBox.h"
 #include "GameTime.h"
 #include "CropManager.h"
-#include "WeatherManager.h"
 #include "cocos2d.h"
 
 using namespace cocos2d;
@@ -24,6 +24,7 @@ void EventService::init(Scene* scn, MapService* ms, PlayerService* ps) {
     mapService = ms;
     playerService = ps;
     uiService = nullptr;
+    weatherService = nullptr;
     
     if (!scene || !mapService || !playerService) return;
     
@@ -60,8 +61,10 @@ void EventService::onDayChanged() {
     // 更新作物生长
     CropManager::getInstance()->updateCrops();
     
-    // 刷新天气
-    WeatherManager::getInstance()->randomRefreshWeather();
+    // 刷新天气（通过WeatherService，符合外观模式）
+    if (weatherService) {
+        weatherService->randomRefreshWeather();
+    }
     
     // 刷新资源
     gameMap->refreshResources();

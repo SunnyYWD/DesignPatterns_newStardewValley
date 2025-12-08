@@ -20,12 +20,30 @@ public:
     // 检查传送点
     bool checkTransition(std::string& targetMap, cocos2d::Vec2& targetTilePos);
     
-    // 获取服务实例
+    // ========== 地图服务封装 ==========
+    // 获取核心游戏对象
     Player* getPlayer() const;
     GameMap* getMap() const;
-    class UIService* getUIService() const { return uiService; }
-    class AudioService* getAudioService() const { return audioService; }
-    class EventService* getEventService() const { return eventService; }
+    
+    // ========== 音频服务封装 ==========
+    void toggleMute();
+    bool getIsMuted() const;
+    
+    // ========== UI服务封装 ==========
+    void showQuestMark(cocos2d::Node* target);
+    void hideQuestMark();
+    void setQuestTipLabelVisible(bool visible);
+    void createQuestTipLabelIfNeeded();
+    void updateQuestUI();
+    void updateQuestUIPosition();
+    
+    // ========== 事件服务封装 ==========
+    void handleQuestDialogue(class Lewis* lewis);
+    void checkQuestProgress();
+    
+    // ========== 天气服务封装 ==========
+    void randomRefreshWeather();
+    void setWeather(const std::string& type); // "rain"/"drought"/"normal"
 
 private:
     GameFacade() = default;
@@ -40,4 +58,9 @@ private:
     class EventService* eventService = nullptr;
     class AudioService* audioService = nullptr;
     class WeatherService* weatherService = nullptr;
+    
+    // 内部服务访问器（仅供内部使用，不对外暴露）
+    class UIService* getUIService() const { return uiService; }
+    class AudioService* getAudioService() const { return audioService; }
+    class EventService* getEventService() const { return eventService; }
 };

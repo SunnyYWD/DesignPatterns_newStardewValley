@@ -8,6 +8,7 @@
 #include "service/WeatherService.h"
 #include "GameMap.h"
 #include "Player.h"
+#include "Lewis.h"
 #include "GameTime.h"
 #include "LightManager.h"
 #include "ItemSystem.h"
@@ -42,6 +43,7 @@ void GameFacade::initialize(cocos2d::Scene* scene) {
     mapService->setUIService(uiService);
     mapService->setEventService(eventService);
     eventService->setUIService(uiService);
+    eventService->setWeatherService(weatherService);
     
     weatherService->init();
     audioService->init();
@@ -118,4 +120,78 @@ Player* GameFacade::getPlayer() const {
 
 GameMap* GameFacade::getMap() const { 
     return mapService ? mapService->getMap() : nullptr; 
+}
+
+// ========== 音频服务封装实现 ==========
+void GameFacade::toggleMute() {
+    if (audioService) {
+        audioService->toggleMute();
+    }
+}
+
+bool GameFacade::getIsMuted() const {
+    return audioService ? audioService->getIsMuted() : false;
+}
+
+// ========== UI服务封装实现 ==========
+void GameFacade::showQuestMark(cocos2d::Node* target) {
+    if (uiService && target) {
+        uiService->showQuestMark(target);
+    }
+}
+
+void GameFacade::hideQuestMark() {
+    if (uiService) {
+        uiService->hideQuestMark();
+    }
+}
+
+void GameFacade::setQuestTipLabelVisible(bool visible) {
+    if (uiService) {
+        uiService->setQuestTipLabelVisible(visible);
+    }
+}
+
+void GameFacade::createQuestTipLabelIfNeeded() {
+    if (uiService) {
+        uiService->createQuestTipLabelIfNeeded();
+    }
+}
+
+void GameFacade::updateQuestUI() {
+    if (uiService) {
+        uiService->updateQuestUI();
+    }
+}
+
+void GameFacade::updateQuestUIPosition() {
+    if (uiService) {
+        uiService->updateQuestUIPosition();
+    }
+}
+
+// ========== 事件服务封装实现 ==========
+void GameFacade::handleQuestDialogue(Lewis* lewis) {
+    if (eventService && lewis) {
+        eventService->handleQuestDialogue(lewis);
+    }
+}
+
+void GameFacade::checkQuestProgress() {
+    if (eventService) {
+        eventService->checkQuestProgress();
+    }
+}
+
+// ========== 天气服务封装实现 ==========
+void GameFacade::randomRefreshWeather() {
+    if (weatherService) {
+        weatherService->randomRefreshWeather();
+    }
+}
+
+void GameFacade::setWeather(const std::string& type) {
+    if (weatherService) {
+        weatherService->setWeather(type);
+    }
 }
