@@ -26,3 +26,7 @@ void WeatherService::setWeather(const std::string& type) {
         WeatherManager::getInstance()->setWeather(NormalWeather::create());
     }
 }
+
+void WeatherService::onDayChanged(const DayChangedEvent&) {
+    randomRefreshWeather();
+}

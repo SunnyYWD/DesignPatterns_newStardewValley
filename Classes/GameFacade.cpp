@@ -6,6 +6,7 @@
 #include "service/EventService.h"
 #include "service/AudioService.h"
 #include "service/WeatherService.h"
+#include "EventBus.h"
 #include "GameMap.h"
 #include "Player.h"
 #include "Lewis.h"
@@ -47,6 +48,23 @@ void GameFacade::initialize(cocos2d::Scene* scene) {
     
     weatherService->init();
     audioService->init();
+
+    auto& bus = EventBus::getInstance();
+    dayChangedSubscriptionId = bus.subscribe(EventType::DayChanged, [this](const Event& e) {
+        const auto* payload = static_cast<const DayChangedEvent*>(e.data);
+        if (payload && eventService) {
+            eventService->onDayChanged(*payload);
+        }
+        if (payload && weatherService) {
+            weatherService->onDayChanged(*payload);
+        }
+    });
+    mapSwitchedSubscriptionId = bus.subscribe(EventType::MapSwitched, [this](const Event& e) {
+        const auto* payload = static_cast<const MapSwitchedEvent*>(e.data);
+        if (payload && entityService) {
+            entityService->onMapChanged(payload->mapName);
+        }
+    });
     
     // 初始化物品系统（从GameScene迁移）
     ItemSystem* itemSystem = ItemSystem::getInstance();
@@ -90,11 +108,12 @@ void GameFacade::update(float dt) {
 
 void GameFacade::switchMap(const std::string& mapName, const cocos2d::Vec2& targetTilePos) {
     mapService->switchMap(mapName, targetTilePos, playerService);
-    entityService->onMapChanged(mapName);
 }
 
 void GameFacade::onDayChanged() {
-    eventService->onDayChanged();
+    auto gameTime = GameTime::getInstance();
+    DayChangedEvent payload{gameTime->getYear(), gameTime->getMonth(), gameTime->getDay()};
+    EventBus::getInstance().publish(Event{EventType::DayChanged, &payload});
 }
 
 bool GameFacade::checkTransition(std::string& targetMap, cocos2d::Vec2& targetTilePos) {

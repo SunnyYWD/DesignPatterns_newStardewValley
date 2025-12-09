@@ -9,6 +9,7 @@
 #include "FishingSystem.h"
 #include "GameTime.h"
 #include "cocos2d.h"
+#include "EventBus.h"
 
 using namespace cocos2d;
 
@@ -93,6 +94,10 @@ void MapService::switchMap(const std::string& mapName, const Vec2& targetTilePos
     
     // 重新初始化钓鱼系统
     FishingSystem::getInstance()->initFishingAreas(gameMap);
+
+    // 发布地图切换事件，供观察者响应
+    MapSwitchedEvent payload{actualMapName};
+    EventBus::getInstance().publish(Event{EventType::MapSwitched, &payload});
     
     // 通知其他服务地图已切换
     if (uiService) {

@@ -35,6 +35,7 @@ void QuestSystem::init() {
 void QuestSystem::startQuest(QuestType type) {
     if (_quests.find(type) != _quests.end()) {
         _quests[type].state = QuestState::IN_PROGRESS;
+        notifyQuestChanged(_quests[type]);
     }
 }
 
@@ -43,6 +44,7 @@ void QuestSystem::updateQuestProgress(QuestType type, int amount) {
         auto& quest = _quests[type];
         if (quest.state == QuestState::IN_PROGRESS) {
             quest.currentAmount = amount;
+            notifyQuestChanged(quest);
         }
     }
 }
@@ -51,6 +53,7 @@ void QuestSystem::completeQuest(QuestType type) {
     if (_quests.find(type) != _quests.end()) {
         auto& quest = _quests[type];
         quest.state = QuestState::COMPLETED;
+        notifyQuestChanged(quest);
     }
 }
 
@@ -70,5 +73,12 @@ void QuestSystem::resetQuest(QuestType type) {
         auto& quest = _quests[type];
         quest.state = QuestState::NOT_STARTED;
         quest.currentAmount = 0;
+        notifyQuestChanged(quest);
     }
+}
+
+void QuestSystem::notifyQuestChanged(const QuestData& quest) {
+    QuestStateChangedEvent payload{quest.type, quest.state, quest.currentAmount, quest.targetAmount};
+    Event event{EventType::QuestStateChanged, &payload};
+    EventBus::getInstance().publish(event);
 }

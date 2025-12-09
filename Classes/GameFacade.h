@@ -1,5 +1,6 @@
 #pragma once
 #include "cocos2d.h"
+#include "EventBus.h"
 #include <string>
 
 class GameMap;
@@ -58,6 +59,8 @@ private:
     class EventService* eventService = nullptr;
     class AudioService* audioService = nullptr;
     class WeatherService* weatherService = nullptr;
+    int dayChangedSubscriptionId = -1;
+    int mapSwitchedSubscriptionId = -1;
     
     // 内部服务访问器（仅供内部使用，不对外暴露）
     class UIService* getUIService() const { return uiService; }

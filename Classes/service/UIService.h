@@ -44,6 +44,7 @@ private:
     // 任务UI
     cocos2d::Label* questTipLabel = nullptr;
     cocos2d::Sprite* questMark = nullptr;
+    int questSubscriptionId = -1;
 
     void initToolIcon();
     void updateToolIcon();

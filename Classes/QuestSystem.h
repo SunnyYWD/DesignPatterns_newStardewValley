@@ -1,6 +1,7 @@
 #pragma once
 #include "cocos2d.h"
 #include "ItemSystem.h"
+#include "EventBus.h"
 
 USING_NS_CC;
 
@@ -55,4 +56,6 @@ private:
     QuestSystem() {}
     static QuestSystem* _instance;
     std::map<QuestType, QuestData> _quests;
+
+    void notifyQuestChanged(const QuestData& quest);
 };

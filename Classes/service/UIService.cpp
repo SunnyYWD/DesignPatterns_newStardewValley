@@ -9,6 +9,7 @@
 #include "DialogueBox.h"
 #include "QuestSystem.h"
 #include "GameTime.h"
+#include "EventBus.h"
 #include "cocos2d.h"
 
 using namespace cocos2d;
@@ -38,6 +39,14 @@ void UIService::init(Scene* scn, PlayerService* ps, MapService* ms) {
 
     initToolIcon();
     initSeedIcon();
+
+    // 订阅任务状态变化，自动更新任务UI
+    questSubscriptionId = EventBus::getInstance().subscribe(EventType::QuestStateChanged, [this](const Event& e) {
+        const auto* payload = static_cast<const QuestStateChangedEvent*>(e.data);
+        if (!payload) return;
+        createQuestTipLabelIfNeeded();
+        updateQuestUI();
+    });
 }
 
 void UIService::initToolIcon() {

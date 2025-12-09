@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include "EventBus.h"
 class BaseEvent;
 class MapService;
 class PlayerService;
@@ -12,7 +13,7 @@ class EventService {
 public:
     void init(cocos2d::Scene* scene, MapService* ms, PlayerService* ps);
     void update(float dt);
-    void onDayChanged();
+    void onDayChanged(const DayChangedEvent& dayInfo);
     void onMapChanged(const std::string& mapName);
     
     // 任务相关

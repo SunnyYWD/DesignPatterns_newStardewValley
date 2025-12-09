@@ -52,7 +52,7 @@ void EventService::update(float dt) {
     }
 }
 
-void EventService::onDayChanged() {
+void EventService::onDayChanged(const DayChangedEvent& dayInfo) {
     if (!mapService) return;
     
     GameMap* gameMap = mapService->getMap();
@@ -61,18 +61,12 @@ void EventService::onDayChanged() {
     // 更新作物生长
     CropManager::getInstance()->updateCrops();
     
-    // 刷新天气（通过WeatherService，符合外观模式）
-    if (weatherService) {
-        weatherService->randomRefreshWeather();
-    }
-    
     // 刷新资源
     gameMap->refreshResources();
     
     // 重置任务状态
     auto questSystem = QuestSystem::getInstance();
-    auto gameTime = GameTime::getInstance();
-    int newDay = gameTime->getDay();
+    int newDay = dayInfo.day;
     
     // 第一天开始时，重置木头收集任务
     if (newDay == 1) {
@@ -280,4 +274,3 @@ void EventService::checkQuestProgress() {
         }
     }
 }
-
