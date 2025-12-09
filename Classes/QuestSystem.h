@@ -5,21 +5,21 @@
 
 USING_NS_CC;
 
-// хннЯв╢л╛ц╤╬ы
+// О©╫О©╫О©╫О©╫в╢л╛ц╤О©╫О©╫
 enum class QuestState {
-    NOT_STARTED,    // хннЯн╢©╙й╪
-    IN_PROGRESS,    // хннЯ╫Ьппжп
-    COMPLETED       // хннЯрямЙЁи
+    NOT_STARTED,    // О©╫О©╫О©╫О©╫н╢О©╫О©╫й╪
+    IN_PROGRESS,    // О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫
+    COMPLETED       // О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫
 };
 
-// хннЯюЮпмц╤╬ы
+// О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫ц╤О©╫О©╫
 enum class QuestType {
-    COLLECT_WOOD,   // йу╪╞д╬м╥хннЯ
-    REPAIR_BRIDGE,  // пчюМгехннЯ
-    // лМ╪с╦Э╤ЮхннЯюЮпм...
+    COLLECT_WOOD,   // О©╫у╪О©╫д╬м╥О©╫О©╫О©╫О©╫
+    REPAIR_BRIDGE,  // О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫
+    // О©╫О©╫О©╫с╦О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫О©╫...
 };
 
-// хннЯйЩ╬щ╫А╧╧
+// О©╫О©╫О©╫О©╫О©╫О©╫О©╫щ╫А╧╧
 struct QuestData {
     QuestType type;
     std::string title;
@@ -33,23 +33,18 @@ class QuestSystem {
 public:
     static QuestSystem* getInstance();
 
-    // ЁУй╪╩╞хннЯо╣мЁ
     void init();
 
-    // ©╙й╪хннЯ
     void startQuest(QuestType type);
 
-    // ╦ЭпбхннЯ╫Ь╤х
     void updateQuestProgress(QuestType type, int amount);
 
-    // мЙЁихннЯ
     void completeQuest(QuestType type);
 
-    // ╩Ях║хннЯв╢л╛
     QuestState getQuestState(QuestType type) const;
 
-    // ╩Ях║хннЯйЩ╬щ
     const QuestData& getQuestData(QuestType type) const;
+    void notifyQuestChanged(const QuestData& quest);
 
     void resetQuest(QuestType type);
 private:
