@@ -2,6 +2,8 @@
 #include "cocos2d.h"
 #include "SkillSystem.h"
 #include "Ore.h"
+#include <unordered_map>
+#include <memory>
 /*
  * 玩家类
  * 功能：管理玩家角色的所有行为和属性
@@ -15,6 +17,7 @@
 class GameScene;    // 前向声明
 class GameMap;      // 前向声明
 class SkillUI;      // 前向声明
+class IToolAction;  // 前向声明
 class Player : public cocos2d::Sprite
 {
 
@@ -62,6 +65,9 @@ public:
 
     // 动作相关
     void performAction(const cocos2d::Vec2& clickPos);      // 执行动作
+    void beginActionWithOffset(int toolOffset);             // 启动动作动画
+    int getToolOffset(ToolType tool) const;                 // 获取工具动画偏移
+    void registerDefaultActions();                          // 注册默认工具动作
 
 
     // 技能等级系统相关
@@ -97,6 +103,7 @@ private:
     float actionTimer = 0;                      // 动作计时器
     const float ACTION_DURATION = 0.4f;         // 动作持续时间
     void updateAction(float dt);                // 动作动画
+    std::unordered_map<ToolType, std::unique_ptr<IToolAction>> toolActions; // 工具动作表
 
     // 工具相关
     ToolType currentTool = ToolType::NONE;          // 当前装备的工具

@@ -2,6 +2,8 @@
 #include "GameMap.h"
 #include "GameScene.h"
 #include "SkillUI.h"
+#include "ToolAction.h"
+#include <memory>
 USING_NS_CC;
 
 Player* Player::_instance = nullptr;
@@ -99,6 +101,8 @@ bool Player::init()
         carrot->setVisible(false);
         this->addChild(carrot);
     }
+    // 注册工具动作
+    registerDefaultActions();
     return true;
 }
 
@@ -320,143 +324,56 @@ bool Player::checkCollision(const Vec2& nextPosition)
 
 void Player::performAction(const Vec2& clickPos)
 {
-    if (!actionSprite || currentTool == ToolType::NONE ||
-        currentTool == ToolType::ROD || currentTool == ToolType::GIFT ||
-        currentTool == ToolType::CARROT)
-    {
+    if (!actionSprite || !canPerformAction || isActioning) {
         return;
     }
 
-    if (!isActioning)
-    {
-        // 如果是斧头，优先检查是否在砍树
-        if (currentTool == ToolType::AXE)
-        {
-            auto scene = dynamic_cast<GameScene*>(Director::getInstance()->getRunningScene());
-            if (scene)
-            {
-                Vec2 playerPos = this->getPosition();
-
-                // 遍历所有树
-                for (auto tree : scene->trees)
-                {
-                    Vec2 treePos = tree->getPosition();
-                    float distance = playerPos.distance(treePos);
-
-                    // 如果距离足够近且树可以被砍
-                    if (distance < 100.0f && tree->canBeChopped())
-                    {
-                        // 播放砍树动画和效果
-                        // 创建砍树特效
-                        auto chopEffect = Sprite::create("effects/chop_effect.png");
-                        if (chopEffect)
-                        {
-                            chopEffect->setPosition(tree->getPosition());
-                            scene->addChild(chopEffect, 10);
-
-                            auto fadeOut = FadeOut::create(0.3f);
-                            auto removeEffect = RemoveSelf::create();
-                            chopEffect->runAction(Sequence::create(fadeOut, removeEffect, nullptr));
-                        }
-                        // 砍树
-                        tree->chop(10);
-
-                        // 设置动画状态
-                        isActioning = true;
-                        actionTimer = 0;
-                        currentFrame = 0;
-
-                        this->setOpacity(0);
-                        actionSprite->setOpacity(255);
-                        actionSprite->setPosition(Vec2::ZERO);
-
-                        float y = 4 * 48 + currentDirection * 48; // 4是斧头动作的偏移
-                        actionSprite->setTextureRect(Rect(0, y, 48, 48));
-                        actionSprite->setLocalZOrder(1);
-                        return; // 找到并砍了树后返回
-                    }
-                }
-            }
-        }
-        // 如果是十字镐，检查是否在挖矿
-        else if (currentTool == ToolType::PICK) {
-            auto scene = dynamic_cast<GameScene*>(Director::getInstance()->getRunningScene());
-            if (scene)
-            {
-                Vec2 playerPos = this->getPosition();
-
-                // 遍历所有矿石
-                for (auto ore : scene->ores) // 假设 ores 是存储矿石的容器
-                {
-                    Vec2 orePos = ore->getPosition();
-                    float distance = playerPos.distance(orePos);
-
-                    // 如果距离足够近且矿石可以被挖掘
-                    if (distance < 100.0f && ore->canBeDug())
-                    {
-                        // 播放挖矿动画和效果
-                        auto digEffect = Sprite::create("effects/dig_effect.png");
-                        if (digEffect)
-                        {
-                            digEffect->setPosition(ore->getPosition());
-                            scene->addChild(digEffect, 10);
-
-                            auto fadeOut = FadeOut::create(0.3f);
-                            auto removeEffect = RemoveSelf::create();
-                            digEffect->runAction(Sequence::create(fadeOut, removeEffect, nullptr));
-                        }
-                        // 挖掘矿石
-                        ore->dig(5); // 假设每次挖掘减少5的生命值
-
-                        // 设置动画状态
-                        isActioning = true;
-                        actionTimer = 0;
-                        currentFrame = 0;
-
-                        this->setOpacity(0);
-                        actionSprite->setOpacity(255);
-                        actionSprite->setPosition(Vec2::ZERO);
-
-                        float y = 5 * 48 + currentDirection * 48; // 5是铲子动作的偏移
-                        actionSprite->setTextureRect(Rect(0, y, 48, 48));
-                        actionSprite->setLocalZOrder(1);
-                        return; // 找到并挖掘了矿石后返回
-                    }
-                }
-            }
-        }
-        else
-        {
-            // 其他工具执行普通动作
-            isActioning = true;
-            actionTimer = 0;
-            currentFrame = 0;
-
-            this->setOpacity(0);
-            actionSprite->setOpacity(255);
-            actionSprite->setPosition(Vec2::ZERO);
-
-            int toolOffset = 0;
-            switch (currentTool)
-            {
-                case ToolType::SHOVEL:
-                    toolOffset = 0;
-                    break;
-                case ToolType::AXE:
-                    toolOffset = 4;
-                    break;
-                case ToolType::WATERING:
-                    toolOffset = 8;
-                    break;
-                default:
-                    return;
-            }
-
-            float y = (toolOffset + currentDirection) * 48;
-            actionSprite->setTextureRect(Rect(0, y, 48, 48));
-            actionSprite->setLocalZOrder(1);
-        }
+    auto it = toolActions.find(currentTool);
+    if (it != toolActions.end() && it->second) {
+        it->second->execute(this, clickPos);
     }
+}
+
+void Player::beginActionWithOffset(int toolOffset)
+{
+    if (!actionSprite) return;
+    isActioning = true;
+    actionTimer = 0;
+    currentFrame = 0;
+
+    this->setOpacity(0);
+    actionSprite->setOpacity(255);
+    actionSprite->setPosition(Vec2::ZERO);
+
+    float y = (toolOffset + currentDirection) * 48;
+    actionSprite->setTextureRect(Rect(0, y, 48, 48));
+    actionSprite->setLocalZOrder(1);
+}
+
+int Player::getToolOffset(ToolType tool) const
+{
+    switch (tool)
+    {
+    case ToolType::SHOVEL:
+        return 0;
+    case ToolType::AXE:
+        return 4;
+    case ToolType::PICK:
+        return 5;
+    case ToolType::WATERING:
+        return 8;
+    default:
+        return 0;
+    }
+}
+
+void Player::registerDefaultActions()
+{
+    toolActions[ToolType::SHOVEL] = std::make_unique<ShovelAction>();
+    toolActions[ToolType::WATERING] = std::make_unique<WateringAction>();
+    toolActions[ToolType::AXE] = std::make_unique<AxeAction>();
+    toolActions[ToolType::PICK] = std::make_unique<PickAction>();
+    toolActions[ToolType::ROD] = std::make_unique<RodAction>();
 }
 
 void Player::updateAction(float dt)
@@ -474,22 +391,7 @@ void Player::updateAction(float dt)
 
         if (currentFrame < 2)
         {
-            int toolOffset = 0;
-            switch (currentTool)
-            {
-                case ToolType::SHOVEL:
-                    toolOffset = 0;
-                    break;
-                case ToolType::AXE:
-                    toolOffset = 4;
-                    break;
-                case ToolType::WATERING:
-                    toolOffset = 8;
-                    break;
-                default:
-                    return;
-            }
-
+            int toolOffset = getToolOffset(currentTool);
             float x = currentFrame * 48;
             float y = (toolOffset + currentDirection) * 48;
             actionSprite->setTextureRect(Rect(x, y, 48, 48));

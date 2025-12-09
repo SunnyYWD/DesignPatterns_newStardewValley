@@ -1592,21 +1592,6 @@ bool GameScene::init()
     // 初始化钓鱼区域
     FishingSystem::getInstance()->initFishingAreas(_gameMap);
     
-    // 初始化鼠标监听器（用于钓鱼和实体交互）
-    auto mouseListener = EventListenerMouse::create();
-    mouseListener->onMouseDown = [this](Event* event)
-        {
-            auto fishingSystem = FishingSystem::getInstance();
-            if (fishingSystem->isCurrentlyFishing()) {
-                fishingSystem->finishFishing();
-                return;
-            }
-            if (fishingSystem->canFish(player->getPosition(), player)) {
-                fishingSystem->startFishing();
-            }
-        };
-    _eventDispatcher->addEventListenerWithSceneGraphPriority(mouseListener, this);
-    
     // 初始化鼠标监听器（用于NPC交互、作物操作等）
     initMouseListener();
     
@@ -1888,22 +1873,6 @@ void GameScene::initMouseListener()
         {
             const EventMouse* e = (EventMouse*)event;
             const Vec2 clickPos = e->getLocation(); // 获取点击位置
-
-            // 鼠标点击时触发开垦
-            if (player && player->getCurrentTool() == Player::ToolType::SHOVEL)
-            {
-                CropManager::getInstance()->onMouseDown(clickPos, player);
-            }
-            // 鼠标点击时触发浇水
-            if (player && player->getCurrentTool() == Player::ToolType::WATERING)
-            {
-                CropManager::getInstance()->onMouseDown(clickPos, player);
-            }
-            // 鼠标点击时触发资源移除
-            if (player && player->getCurrentTool() == Player::ToolType::AXE)
-            {
-                CropManager::getInstance()->onMouseDown(clickPos, player);
-            }
 
             // 检查是否靠近并点击了刘易斯
             if (lewis) {
