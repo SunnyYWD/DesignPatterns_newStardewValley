@@ -16,8 +16,45 @@
 #include "FishingSystem.h"
 #include "CropManager.h"
 #include "cocos2d.h"
+#include <utility>
 
 using namespace cocos2d;
+
+namespace {
+// 简单的事件订阅RAII封装：构造时保存订阅ID，析构时自动取消订阅
+class EventBusSubscription {
+public:
+    EventBusSubscription(EventType type, int id)
+        : type(type), id(id) {}
+    ~EventBusSubscription() {
+        if (id != -1) {
+            EventBus::getInstance().unsubscribe(type, id);
+        }
+    }
+    // 不允许拷贝，允许移动
+    EventBusSubscription(const EventBusSubscription&) = delete;
+    EventBusSubscription& operator=(const EventBusSubscription&) = delete;
+    EventBusSubscription(EventBusSubscription&& other) noexcept
+        : type(other.type), id(other.id) {
+        other.id = -1;
+    }
+    EventBusSubscription& operator=(EventBusSubscription&& other) noexcept {
+        if (this != &other) {
+            // 先取消自身，再接管
+            if (id != -1) {
+                EventBus::getInstance().unsubscribe(type, id);
+            }
+            type = other.type;
+            id = other.id;
+            other.id = -1;
+        }
+        return *this;
+    }
+private:
+    EventType type;
+    int id;
+};
+} // namespace
 
 GameFacade& GameFacade::instance() {
     static GameFacade inst;
@@ -25,46 +62,62 @@ GameFacade& GameFacade::instance() {
 }
 
 void GameFacade::initialize(cocos2d::Scene* scene) {
-    mapService = new MapService();
-    playerService = new PlayerService();
-    entityService = new EntityService();
-    uiService = new UIService();
-    eventService = new EventService();
-    audioService = new AudioService();
-    weatherService = new WeatherService();
+/****************************************************************
+ *
+ * 使用RAII模式重构-重构后的代码
+ *
+ ****************************************************************/
+    mapService = std::make_unique<MapService>();
+    playerService = std::make_unique<PlayerService>();
+    entityService = std::make_unique<EntityService>();
+    uiService = std::make_unique<UIService>();
+    eventService = std::make_unique<EventService>();
+    audioService = std::make_unique<AudioService>();
+    weatherService = std::make_unique<WeatherService>();
 
     mapService->init(scene, "First");
-    playerService->init(scene, mapService);
-    entityService->init(scene, mapService, playerService);
-    uiService->init(scene, playerService, mapService);
-    eventService->init(scene, mapService, playerService);
+    playerService->init(scene, mapService.get());
+    entityService->init(scene, mapService.get(), playerService.get());
+    uiService->init(scene, playerService.get(), mapService.get());
+    eventService->init(scene, mapService.get(), playerService.get());
     
     // 设置服务之间的依赖关系
-    mapService->setAudioService(audioService);
-    mapService->setUIService(uiService);
-    mapService->setEventService(eventService);
-    eventService->setUIService(uiService);
-    eventService->setWeatherService(weatherService);
+    mapService->setAudioService(audioService.get());
+    mapService->setUIService(uiService.get());
+    mapService->setEventService(eventService.get());
+    eventService->setUIService(uiService.get());
+    eventService->setWeatherService(weatherService.get());
     
     weatherService->init();
     audioService->init();
 
     auto& bus = EventBus::getInstance();
-    dayChangedSubscriptionId = bus.subscribe(EventType::DayChanged, [this](const Event& e) {
-        const auto* payload = static_cast<const DayChangedEvent*>(e.data);
-        if (payload && eventService) {
-            eventService->onDayChanged(*payload);
-        }
-        if (payload && weatherService) {
-            weatherService->onDayChanged(*payload);
-        }
-    });
-    mapSwitchedSubscriptionId = bus.subscribe(EventType::MapSwitched, [this](const Event& e) {
-        const auto* payload = static_cast<const MapSwitchedEvent*>(e.data);
-        if (payload && entityService) {
-            entityService->onMapChanged(payload->mapName);
-        }
-    });
+/****************************************************************
+ *
+ * 使用RAII模式重构-重构后的代码
+ *
+ ****************************************************************/
+    dayChangedSubscription = std::make_unique<EventBusSubscription>(
+        EventType::DayChanged,
+        bus.subscribe(EventType::DayChanged, [this](const Event& e) {
+            const auto* payload = static_cast<const DayChangedEvent*>(e.data);
+            if (payload && eventService) {
+                eventService->onDayChanged(*payload);
+            }
+            if (payload && weatherService) {
+                weatherService->onDayChanged(*payload);
+            }
+        })
+    );
+    mapSwitchedSubscription = std::make_unique<EventBusSubscription>(
+        EventType::MapSwitched,
+        bus.subscribe(EventType::MapSwitched, [this](const Event& e) {
+            const auto* payload = static_cast<const MapSwitchedEvent*>(e.data);
+            if (payload && entityService) {
+                entityService->onMapChanged(payload->mapName);
+            }
+        })
+    );
     
     // 初始化物品系统（从GameScene迁移）
     ItemSystem* itemSystem = ItemSystem::getInstance();

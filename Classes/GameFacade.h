@@ -2,6 +2,7 @@
 #include "cocos2d.h"
 #include "EventBus.h"
 #include <string>
+#include <memory>
 
 class GameMap;
 class Player;
@@ -52,18 +53,28 @@ private:
     GameFacade(const GameFacade&) = delete;
     GameFacade& operator=(const GameFacade&) = delete;
 
-    class MapService* mapService = nullptr;
-    class PlayerService* playerService = nullptr;
-    class EntityService* entityService = nullptr;
-    class UIService* uiService = nullptr;
-    class EventService* eventService = nullptr;
-    class AudioService* audioService = nullptr;
-    class WeatherService* weatherService = nullptr;
-    int dayChangedSubscriptionId = -1;
-    int mapSwitchedSubscriptionId = -1;
+/****************************************************************
+ *
+ * 使用RAII模式重构-重构后的代码
+ *
+ ****************************************************************/
+    std::unique_ptr<class MapService> mapService;
+    std::unique_ptr<class PlayerService> playerService;
+    std::unique_ptr<class EntityService> entityService;
+    std::unique_ptr<class UIService> uiService;
+    std::unique_ptr<class EventService> eventService;
+    std::unique_ptr<class AudioService> audioService;
+    std::unique_ptr<class WeatherService> weatherService;
+/****************************************************************
+ *
+ * 使用RAII模式重构-重构后的代码
+ *
+ ****************************************************************/
+    std::unique_ptr<class EventBusSubscription> dayChangedSubscription;
+    std::unique_ptr<class EventBusSubscription> mapSwitchedSubscription;
     
     // 内部服务访问器（仅供内部使用，不对外暴露）
-    class UIService* getUIService() const { return uiService; }
-    class AudioService* getAudioService() const { return audioService; }
-    class EventService* getEventService() const { return eventService; }
+    class UIService* getUIService() const { return uiService.get(); }
+    class AudioService* getAudioService() const { return audioService.get(); }
+    class EventService* getEventService() const { return eventService.get(); }
 };
